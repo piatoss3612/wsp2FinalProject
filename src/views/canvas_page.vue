@@ -21,7 +21,7 @@
               v-for="chip in chips"
               :key="chip"
               close
-              @click:close="chips.pop(chip)"
+              @click:close="chips.splice(chips.indexOf(chip), 1)"
           >{{ chip }}</v-chip>
         </v-chip-group>
       </v-col>
@@ -41,6 +41,7 @@ import ml5 from "ml5";
 import P5 from "p5";
 import modelList from "@/assets/models";
 
+let count = Math.floor(Math.random() * 100);
 
 export default {
   name: "App",
@@ -70,10 +71,8 @@ export default {
         this.modelChange();
 
         const saveBtn = p.select("#save");
-        console.log(saveBtn);
         saveBtn.mousePressed(p.saveDrawing);
         const clearBtn = p.select("#clear");
-        console.log(clearBtn);
         clearBtn.mousePressed(p.clearDrawing);
       };
 
@@ -125,7 +124,9 @@ export default {
       };
 
       p.saveDrawing = () => {
-        p.saveCanvas(this.canvas, "untitled", "png");
+        this.openDialog = true;
+        p.saveCanvas(this.canvas, "sketch" + count, "png");
+        count++
       };
 
       p.clearDrawing = () => {

@@ -6,12 +6,7 @@ const routes = [
   {
     path: '/',
     name: "canvas",
-    component: () => import("../components/canvas_page"),
-  },
-  {
-    path: '/gallery',
-    name: "gallery",
-    component: () => import("../components/gallery_page"),
+    component: () => import("../views/canvas_page"),
   },
 ];
 
