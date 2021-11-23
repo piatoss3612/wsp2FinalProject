@@ -1,7 +1,7 @@
 <template>
   <v-app id="customFont">
     <v-app-bar app color="yellow">
-      <v-toolbar-title class="mx-auto font-weight-bold"
+      <v-toolbar-title class="font-weight-bold"
         >Sketch It</v-toolbar-title
       >
       <v-spacer></v-spacer>
