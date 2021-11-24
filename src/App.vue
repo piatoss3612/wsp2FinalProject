@@ -1,9 +1,7 @@
 <template>
   <v-app id="customFont">
     <v-app-bar app color="yellow">
-      <v-toolbar-title class="font-weight-bold"
-        >Sketch It</v-toolbar-title
-      >
+      <v-toolbar-title class="font-weight-bold">Sketch It</v-toolbar-title>
       <v-spacer></v-spacer>
       <v-tooltip bottom>
         <template v-slot:activator="{ on, attrs }">
@@ -124,13 +122,14 @@ export default {
 </script>
 <style>
 @font-face {
-  font-family: 'CookieRun-Regular';
-  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/CookieRun-Regular.woff') format('woff');
+  font-family: "CookieRun-Regular";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/CookieRun-Regular.woff")
+    format("woff");
   font-weight: normal;
   font-style: normal;
 }
 
 #customFont {
-  font-family: 'CookieRun-Regular';
+  font-family: "CookieRun-Regular";
 }
 </style>

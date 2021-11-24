@@ -1,32 +1,36 @@
 <template>
-  <v-container>
-    <v-row align="center" justify="center">
-      <v-col sm="4" md="6">
-        <v-select
-          :items="modelList"
-          v-model="currentModel"
-          label="Select Model"
-          @change="modelChange"
-          height="50px"
-        ></v-select>
-      </v-col>
-    </v-row>
-    <v-row align="center" justify="center">
-      <v-col sm="6" id="canvasContainer">
+  <v-container fluid>
+    <v-row>
+      <v-col xs="12" sm="8" id="canvasContainer">
         <div id="canvas"></div>
       </v-col>
-    </v-row>
-    <v-row align="center" justify="center">
-      <v-col sm="4" md="6">
-        <v-chip-group column>
-          <v-chip
-            v-for="chip in chips"
-            :key="chip"
-            close
-            @click:close="chips.splice(chips.indexOf(chip), 1)"
-            >{{ chip }}</v-chip
-          >
-        </v-chip-group>
+      <v-divider vertical></v-divider>
+      <v-col xs="12" sm="4" class="d-flex flex-column">
+        <v-row class="ma-2 pa-2 flex-grow-0">
+          <v-col>
+            <v-select
+              :items="modelList"
+              v-model="currentModel"
+              label="Select Model"
+              @change="modelChange"
+              height="50px"
+            ></v-select>
+          </v-col>
+        </v-row>
+        <v-spacer></v-spacer>
+        <v-row align="end" class="ma-2 pa-2 flex-grow-0">
+          <v-col>
+            <v-chip-group column>
+              <v-chip
+                v-for="chip in chips"
+                :key="chip"
+                close
+                @click:close="chips.splice(chips.indexOf(chip), 1)"
+                >{{ chip }}</v-chip
+              >
+            </v-chip-group>
+          </v-col>
+        </v-row>
       </v-col>
     </v-row>
     <v-snackbar color="primary" v-model="isLoaded" timeout="2000" dark shaped
@@ -61,9 +65,11 @@ export default {
   mounted() {
     const script = (p) => {
       p.setup = () => {
-        const containerSize = document.getElementById("canvas").getBoundingClientRect();
+        const containerSize = document
+          .getElementById("canvas")
+          .getBoundingClientRect();
         const canvasWidth = Math.floor(containerSize.width);
-        const canvasHeight = p.windowHeight / 2;
+        const canvasHeight = (p.windowHeight / 1.2);
         this.canvas = p.createCanvas(canvasWidth, canvasHeight);
         this.canvas.mousePressed(p.resetDrawing);
         this.canvas.mouseReleased(p.startSketchRNN);
@@ -140,16 +146,17 @@ export default {
       };
 
       p.windowResized = () => {
-        const containerResized = document.getElementById("canvas").getBoundingClientRect();
+        const containerResized = document
+          .getElementById("canvas")
+          .getBoundingClientRect();
         const resizedWidth = Math.floor(containerResized.width);
-        const resizedHeight = p.windowHeight / 2;
+        const resizedHeight = (p.windowHeight / 1.2);
         p.resizeCanvas(resizedWidth, resizedHeight);
         p.background(230);
       };
     };
     new P5(script, "canvas");
   },
-
   methods: {
     modelReady: function () {
       this.isLoaded = true;
