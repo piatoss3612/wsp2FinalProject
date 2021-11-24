@@ -1,0 +1,24 @@
+@font-face {
+    font-family: "CookieRun-Regular";
+    src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/CookieRun-Regular.woff")
+    format("woff");
+    font-weight: normal;
+    font-style: normal;
+}
+#app {
+    font-family: "CookieRun-Regular";
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    overscroll-behavior-y: contain;
+    display: flex;
+    flex-direction: column;
+}
+#canvas {
+    flex-grow: 1;
+    overflow: hidden;
+}
+#canvasContainer {
+    height: 70vh;
+}
