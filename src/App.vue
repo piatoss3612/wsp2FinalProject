@@ -1,7 +1,7 @@
 <template>
   <v-app id="app">
     <v-main app>
-      <v-overlay :value="guide" opacity="0.8">
+      <v-overlay :value="guideIsOpen" opacity="0.8">
         <v-stepper v-model="pagination" vertical>
           <v-stepper-step :complete="pagination > 1" step="1">
             Select The Model!
@@ -12,7 +12,7 @@
               <v-img src="./assets/guide/step1.png" position="center"></v-img>
             </v-card>
             <v-btn color="primary" @click="pagination = 2"> Continue </v-btn>
-            <v-btn text @click="guide = !guide"> Cancel </v-btn>
+            <v-btn text @click="guideIsOpen = !guideIsOpen"> Cancel </v-btn>
           </v-stepper-content>
           <v-stepper-step :complete="pagination > 2" step="2">
             Wait The Model Loaded!
@@ -23,7 +23,7 @@
               <v-img src="./assets/guide/step2.png" position="center"></v-img>
             </v-card>
             <v-btn color="primary" @click="pagination = 3"> Continue </v-btn>
-            <v-btn text @click="guide = !guide"> Cancel </v-btn>
+            <v-btn text @click="guideIsOpen = !guideIsOpen"> Cancel </v-btn>
           </v-stepper-content>
           <v-stepper-step :complete="pagination > 3" step="3">
             Sketch It!
@@ -34,7 +34,7 @@
               <v-img src="./assets/guide/step3.png" position="center"></v-img>
             </v-card>
             <v-btn color="primary" @click="pagination = 4"> Continue </v-btn>
-            <v-btn text @click="guide = !guide"> Cancel </v-btn>
+            <v-btn text @click="guideIsOpen = !guideIsOpen"> Cancel </v-btn>
           </v-stepper-content>
           <v-stepper-step :complete="pagination > 4" step="4">
             Save / Clear Your Sketch!
@@ -52,13 +52,13 @@
             <v-btn
               color="primary"
               @click="
-                guide = !guide;
+                guideIsOpen = !guideIsOpen;
                 pagination = 1;
               "
             >
               Complete
             </v-btn>
-            <v-btn text @click="guide = !guide"> Cancel </v-btn>
+            <v-btn text @click="guideIsOpen = !guideIsOpen"> Cancel </v-btn>
           </v-stepper-content>
         </v-stepper>
       </v-overlay>
@@ -145,7 +145,7 @@
         </v-row>
         <v-snackbar
           color="primary"
-          v-model="isLoaded"
+          v-model="modelIsLoaded"
           timeout="2000"
           dark
           shaped
@@ -167,21 +167,21 @@ export default {
   data() {
     return {
       model: null,
-      previousPen: "down",
-      x: null,
-      y: null,
-      strokePath: null,
-      seedStrokes: [],
-      canvas: null,
       modelList: modelList,
       currentModel: "cat",
-      isLoaded: false,
+      modelIsLoaded: false,
       chips: [],
-      guide: false,
+      guideIsOpen: false,
       pagination: 1,
     };
   },
   mounted() {
+    let x;
+    let y;
+    let previousPen = "down";
+    let strokePath;
+    let seedStrokes = [];
+    let canvas;
     const script = (p) => {
       p.setup = () => {
         const canvasSize = document
@@ -189,9 +189,9 @@ export default {
           .getBoundingClientRect();
         const canvasWidth = Math.floor(canvasSize.width);
         const canvasHeight = Math.floor(canvasSize.height);
-        this.canvas = p.createCanvas(canvasWidth, canvasHeight);
-        this.canvas.mousePressed(p.resetDrawing);
-        this.canvas.mouseReleased(p.startSketchRNN);
+        canvas = p.createCanvas(canvasWidth, canvasHeight);
+        canvas.mousePressed(p.resetDrawing);
+        canvas.mouseReleased(p.startSketchRNN);
         p.background(230);
         this.modelChange();
 
@@ -202,7 +202,7 @@ export default {
       };
 
       p.draw = () => {
-        if (p.mouseIsPressed) {
+        if (!this.guideIsOpen && p.mouseIsPressed) {
           p.stroke(0, 0, 255);
           p.strokeWeight(4);
           p.line(p.pmouseX, p.pmouseY, p.mouseX, p.mouseY);
@@ -212,48 +212,48 @@ export default {
             dy: p.mouseY - p.pmouseY,
             pen: "down",
           };
-          this.seedStrokes.push(userStroke);
+          seedStrokes.push(userStroke);
         }
 
-        if (this.strokePath) {
-          if (this.previousPen === "down") {
+        if (!this.guideIsOpen && strokePath) {
+          if (previousPen === "down") {
             p.stroke(0);
             p.strokeWeight(4);
             p.line(
-              this.x,
-              this.y,
-              this.x + this.strokePath.dx,
-              this.y + this.strokePath.dy
+              x,
+              y,
+              x + strokePath.dx,
+              y + strokePath.dy
             );
           }
-          this.x += this.strokePath.dx;
-          this.y += this.strokePath.dy;
-          this.previousPen = this.strokePath.pen;
+          x += strokePath.dx;
+          y += strokePath.dy;
+          previousPen = strokePath.pen;
 
-          if (this.strokePath.pen !== "end") {
-            this.strokePath = null;
+          if (strokePath.pen !== "end") {
+            strokePath = null;
             this.model.generate(p.gotStroke);
           }
         }
       };
 
       p.resetDrawing = () => {
-        this.seedStrokes = [];
+        seedStrokes = [];
         this.model.reset();
       };
 
       p.startSketchRNN = () => {
-        this.x = p.mouseX;
-        this.y = p.mouseY;
-        this.model.generate(this.seedStrokes, p.gotStroke);
+        x = p.mouseX;
+        y = p.mouseY;
+        this.model.generate(seedStrokes, p.gotStroke);
       };
 
       p.gotStroke = (err, result) => {
-        this.strokePath = result;
+        strokePath = result;
       };
 
       p.saveDrawing = () => {
-        p.saveCanvas(this.canvas, "sketch" + count, "png");
+        p.saveCanvas(canvas, "sketch" + count, "png");
         count++;
       };
 
@@ -277,7 +277,7 @@ export default {
   },
   methods: {
     modelReady: function () {
-      this.isLoaded = true;
+      this.modelIsLoaded = true;
     },
     modelChange: function () {
       this.model = ml5.sketchRNN(this.currentModel, this.modelReady);
@@ -287,7 +287,7 @@ export default {
       }
     },
     openGuide: function () {
-      this.guide = true;
+      this.guideIsOpen = true;
     },
   },
 };
