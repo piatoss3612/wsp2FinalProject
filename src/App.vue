@@ -8,7 +8,7 @@
             <small>more than 100 models</small>
           </v-stepper-step>
           <v-stepper-content step="1">
-            <v-card color="white" class="mb-12" height="80px" width="360px">
+            <v-card color="white" class="mb-12" height="60px" width="360px">
               <v-img src="./assets/guide/step1.png" position="center"></v-img>
             </v-card>
             <v-btn color="primary" @click="pagination = 2"> Continue </v-btn>
@@ -62,23 +62,29 @@
           </v-stepper-content>
         </v-stepper>
       </v-overlay>
-      <v-container fluid>
-        <v-row>
+      <v-container fluid id="header">
+        <v-row align="center">
           <v-col xs="8" sm="4">
             <v-select
+              rounded
+              outlined
+              hide-details
+              color="#4e4e4e"
+              background-color="#fafafa"
               :items="modelList"
               v-model="currentModel"
               label="Select Model"
-              @change="modelChange"
+              @change="loadModel"
               height="30px"
+              class="custom"
             ></v-select>
           </v-col>
           <v-col xs="4" sm="4">
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
+                  color="#4e4e4e"
                   class="hidden-xs-only"
-                  color="black"
                   v-bind="attrs"
                   v-on="on"
                   icon
@@ -94,7 +100,7 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
-                  color="black"
+                  color="#4e4e4e"
                   v-bind="attrs"
                   v-on="on"
                   icon
@@ -109,7 +115,7 @@
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
-                  color="black"
+                  color="#4e4e4e"
                   v-bind="attrs"
                   v-on="on"
                   icon
@@ -125,7 +131,7 @@
         </v-row>
         <v-row>
           <v-col>
-            <v-chip-group column class="hidden-xs-only">
+            <v-chip-group dark show-arrows class="hidden-xs-only">
               <v-chip
                 v-for="chip in chips"
                 :key="chip"
@@ -137,9 +143,10 @@
           </v-col>
         </v-row>
       </v-container>
+      <v-divider></v-divider>
       <v-container fluid>
         <v-row>
-          <v-col id="canvasContainer">
+          <v-col>
             <div id="canvas"></div>
           </v-col>
         </v-row>
@@ -185,20 +192,20 @@ export default {
     const script = (p) => {
       p.setup = () => {
         const canvasSize = document
-          .getElementById("canvasContainer")
+          .getElementById("canvas")
           .getBoundingClientRect();
         const canvasWidth = Math.floor(canvasSize.width);
         const canvasHeight = Math.floor(canvasSize.height);
         canvas = p.createCanvas(canvasWidth, canvasHeight);
-        canvas.mousePressed(p.resetDrawing);
-        canvas.mouseReleased(p.startSketchRNN);
-        p.background(230);
-        this.modelChange();
+        canvas.mousePressed(resetDrawing);
+        canvas.mouseReleased(startSketchRNN);
+        p.background(255);
+        this.loadModel();
 
         const saveBtn = p.select("#save");
-        saveBtn.mousePressed(p.saveDrawing);
+        saveBtn.mousePressed(saveDrawing);
         const clearBtn = p.select("#clear");
-        clearBtn.mousePressed(p.clearDrawing);
+        clearBtn.mousePressed(clearDrawing);
       };
 
       p.draw = () => {
@@ -219,12 +226,7 @@ export default {
           if (previousPen === "down") {
             p.stroke(0);
             p.strokeWeight(4);
-            p.line(
-              x,
-              y,
-              x + strokePath.dx,
-              y + strokePath.dy
-            );
+            p.line(x, y, x + strokePath.dx, y + strokePath.dy);
           }
           x += strokePath.dx;
           y += strokePath.dy;
@@ -232,59 +234,56 @@ export default {
 
           if (strokePath.pen !== "end") {
             strokePath = null;
-            this.model.generate(p.gotStroke);
+            this.model.generate(gotStroke);
           }
         }
       };
 
-      p.resetDrawing = () => {
-        seedStrokes = [];
-        this.model.reset();
-      };
-
-      p.startSketchRNN = () => {
-        x = p.mouseX;
-        y = p.mouseY;
-        this.model.generate(seedStrokes, p.gotStroke);
-      };
-
-      p.gotStroke = (err, result) => {
-        strokePath = result;
-      };
-
-      p.saveDrawing = () => {
-        p.saveCanvas(canvas, "sketch" + count, "png");
-        count++;
-      };
-
-      p.clearDrawing = () => {
-        p.clear();
-        p.background(234);
-        this.chips = [this.currentModel];
-      };
-
       p.windowResized = () => {
         const resizedSize = document
-          .getElementById("canvasContainer")
+          .getElementById("canvas")
           .getBoundingClientRect();
         const resizedWidth = Math.floor(resizedSize.width);
         const resizedHeight = Math.floor(resizedSize.height);
         p.resizeCanvas(resizedWidth, resizedHeight);
-        p.background(230);
+        p.background(255);
+      };
+
+      const resetDrawing = () => {
+        seedStrokes = [];
+        this.model.reset();
+      };
+
+      const startSketchRNN = () => {
+        x = p.mouseX;
+        y = p.mouseY;
+        this.model.generate(seedStrokes, gotStroke);
+      };
+
+      const gotStroke = (err, result) => {
+        strokePath = result;
+      };
+
+      const saveDrawing = () => {
+        p.saveCanvas(canvas, "sketch" + count, "png");
+        count++;
+      };
+
+      const clearDrawing = () => {
+        p.clear();
+        p.background(255);
+        this.chips = [this.currentModel];
       };
     };
-    new P5(script, "canvas");
+    return new P5(script, "canvas");
   },
   methods: {
     modelReady: function () {
       this.modelIsLoaded = true;
     },
-    modelChange: function () {
+    loadModel: function () {
       this.model = ml5.sketchRNN(this.currentModel, this.modelReady);
       this.chips.push(this.currentModel);
-      if (this.chips.length > 8) {
-        this.chips.shift();
-      }
     },
     openGuide: function () {
       this.guideIsOpen = true;
