@@ -1,6 +1,6 @@
 <template>
   <v-app id="app">
-    <v-main app>
+    <v-main>
       <v-overlay :value="guideIsOpen" opacity="0.8">
         <v-stepper v-model="pagination" vertical>
           <v-stepper-step :complete="pagination > 1" step="1">
@@ -8,7 +8,7 @@
             <small>more than 100 models</small>
           </v-stepper-step>
           <v-stepper-content step="1">
-            <v-card color="white" class="mb-12" height="60px" width="360px">
+            <v-card color="white" class="mb-12" height="40px" width="360px">
               <v-img src="./assets/guide/step1.png" position="center"></v-img>
             </v-card>
             <v-btn color="primary" @click="pagination = 2"> Continue </v-btn>
@@ -19,7 +19,7 @@
             <small>wait 1~2 seconds</small>
           </v-stepper-step>
           <v-stepper-content step="2">
-            <v-card color="white" class="mb-12" height="60px" width="360px">
+            <v-card color="white" class="mb-12" height="40px" width="360px">
               <v-img src="./assets/guide/step2.png" position="center"></v-img>
             </v-card>
             <v-btn color="primary" @click="pagination = 3"> Continue </v-btn>
@@ -44,7 +44,7 @@
             <v-card
               color="grey lighten-1"
               class="mb-12"
-              height="110px"
+              height="80px"
               width="360px"
             >
               <v-img src="./assets/guide/step4.png" position="center"></v-img>
@@ -64,7 +64,7 @@
       </v-overlay>
       <v-container fluid id="header">
         <v-row align="center">
-          <v-col xs="8" sm="4">
+          <v-col xs="6" sm="4">
             <v-select
               rounded
               outlined
@@ -79,7 +79,7 @@
               class="custom"
             ></v-select>
           </v-col>
-          <v-col xs="4" sm="4">
+          <v-col xs="6" sm="4">
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
@@ -105,7 +105,7 @@
                   v-on="on"
                   icon
                   x-large
-                  id="save"
+                  @click="openDialog"
                 >
                   <v-icon>mdi-content-save</v-icon>
                 </v-btn>
@@ -159,6 +159,33 @@
           >sketchRNN Model Loaded!
         </v-snackbar>
       </v-container>
+      <v-dialog v-model="dialogIsOpen" eager>
+        <v-card outlined>
+          <v-card-title>Save Sketch</v-card-title>
+          <v-form ref="form" class="ma-2 pa-2" lazy-validation>
+            <v-text-field
+              v-model="saveTitle"
+              :counter="10"
+              label="Title"
+              :rules="titleRules"
+              required
+              outlined
+            ></v-text-field>
+            <v-select
+              v-model="saveType"
+              :items="fileTypes"
+              label="File Type"
+              :rules="[(v) => !!v || 'You must choose type']"
+              required
+              outlined
+            ></v-select>
+            <v-btn class="ma-2" color="success" id="save"> Save </v-btn>
+            <v-btn class="ma-2" dark @click="dialogIsOpen = !dialogIsOpen">
+              Close
+            </v-btn>
+          </v-form>
+        </v-card>
+      </v-dialog>
     </v-main>
   </v-app>
 </template>
@@ -166,8 +193,6 @@
 import ml5 from "ml5";
 import P5 from "p5";
 import modelList from "@/assets/models";
-
-let count = Math.floor(Math.random() * 100);
 
 export default {
   name: "App",
@@ -179,7 +204,15 @@ export default {
       modelIsLoaded: false,
       chips: [],
       guideIsOpen: false,
+      dialogIsOpen: false,
       pagination: 1,
+      saveTitle: "sketch",
+      titleRules: [
+        (v) => !!v || "Title is required",
+        (v) => (v && v.length <= 10) || "Title must be less than 10 characters",
+      ],
+      saveType: null,
+      fileTypes: ["png", "jpg"],
     };
   },
   mounted() {
@@ -199,7 +232,7 @@ export default {
         canvas = p.createCanvas(canvasWidth, canvasHeight);
         canvas.mousePressed(resetDrawing);
         canvas.mouseReleased(startSketchRNN);
-        p.background(255);
+        p.background(255); // white
         this.loadModel();
 
         const saveBtn = p.select("#save");
@@ -209,7 +242,7 @@ export default {
       };
 
       p.draw = () => {
-        if (!this.guideIsOpen && p.mouseIsPressed) {
+        if (!this.guideIsOpen && !this.dialogIsOpen && p.mouseIsPressed) {
           p.stroke(0, 0, 255);
           p.strokeWeight(4);
           p.line(p.pmouseX, p.pmouseY, p.mouseX, p.mouseY);
@@ -222,7 +255,7 @@ export default {
           seedStrokes.push(userStroke);
         }
 
-        if (!this.guideIsOpen && strokePath) {
+        if (strokePath) {
           if (previousPen === "down") {
             p.stroke(0);
             p.strokeWeight(4);
@@ -265,8 +298,12 @@ export default {
       };
 
       const saveDrawing = () => {
-        p.saveCanvas(canvas, "sketch" + count, "png");
-        count++;
+        if (this.$refs.form.validate()) {
+          p.saveCanvas(canvas, this.saveTitle, this.saveType);
+          this.saveTitle = "sketch";
+          this.saveType = null;
+          this.dialogIsOpen = false;
+        }
       };
 
       const clearDrawing = () => {
@@ -275,7 +312,7 @@ export default {
         this.chips = [this.currentModel];
       };
     };
-    return new P5(script, "canvas");
+    new P5(script, "canvas");
   },
   methods: {
     modelReady: function () {
@@ -283,10 +320,15 @@ export default {
     },
     loadModel: function () {
       this.model = ml5.sketchRNN(this.currentModel, this.modelReady);
-      this.chips.push(this.currentModel);
+      if (!this.chips.includes(this.currentModel)) {
+        this.chips.push(this.currentModel);
+      }
     },
     openGuide: function () {
       this.guideIsOpen = true;
+    },
+    openDialog: function () {
+      this.dialogIsOpen = true;
     },
   },
 };
