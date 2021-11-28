@@ -64,7 +64,7 @@
       </v-overlay>
       <v-container fluid id="header">
         <v-row align="center">
-          <v-col xs="6" sm="4">
+          <v-col sm="4">
             <v-select
               rounded
               outlined
@@ -74,12 +74,12 @@
               :items="modelList"
               v-model="currentModel"
               label="Select Model"
+              @click="modelSelectIsOpen = true"
+              @blur="modelSelectIsOpen = false"
               @change="loadModel"
-              height="30px"
-              class="custom"
             ></v-select>
           </v-col>
-          <v-col xs="6" sm="4">
+          <v-col sm="4">
             <v-tooltip bottom>
               <template v-slot:activator="{ on, attrs }">
                 <v-btn
@@ -129,9 +129,9 @@
             </v-tooltip>
           </v-col>
         </v-row>
-        <v-row>
+        <v-row class="hidden-xs-only">
           <v-col>
-            <v-chip-group dark show-arrows class="hidden-xs-only">
+            <v-chip-group dark show-arrows>
               <v-chip
                 v-for="chip in chips"
                 :key="chip"
@@ -159,7 +159,7 @@
           >sketchRNN Model Loaded!
         </v-snackbar>
       </v-container>
-      <v-dialog v-model="dialogIsOpen" eager>
+      <v-dialog v-model="saveDialogIsOpen" eager>
         <v-card outlined>
           <v-card-title>Save Sketch</v-card-title>
           <v-form ref="form" class="ma-2 pa-2" lazy-validation>
@@ -180,7 +180,11 @@
               outlined
             ></v-select>
             <v-btn class="ma-2" color="success" id="save"> Save </v-btn>
-            <v-btn class="ma-2" dark @click="dialogIsOpen = !dialogIsOpen">
+            <v-btn
+              class="ma-2"
+              dark
+              @click="saveDialogIsOpen = !saveDialogIsOpen"
+            >
               Close
             </v-btn>
           </v-form>
@@ -203,8 +207,9 @@ export default {
       currentModel: "cat",
       modelIsLoaded: false,
       chips: [],
+      modelSelectIsOpen: false,
       guideIsOpen: false,
-      dialogIsOpen: false,
+      saveDialogIsOpen: false,
       pagination: 1,
       saveTitle: "sketch",
       titleRules: [
@@ -242,7 +247,12 @@ export default {
       };
 
       p.draw = () => {
-        if (!this.guideIsOpen && !this.dialogIsOpen && p.mouseIsPressed) {
+        if (
+          !this.guideIsOpen &&
+          !this.saveDialogIsOpen &&
+          !this.modelSelectIsOpen &&
+          p.mouseIsPressed
+        ) {
           p.stroke(0, 0, 255);
           p.strokeWeight(4);
           p.line(p.pmouseX, p.pmouseY, p.mouseX, p.mouseY);
@@ -273,13 +283,15 @@ export default {
       };
 
       p.windowResized = () => {
-        const resizedSize = document
-          .getElementById("canvas")
-          .getBoundingClientRect();
-        const resizedWidth = Math.floor(resizedSize.width);
-        const resizedHeight = Math.floor(resizedSize.height);
-        p.resizeCanvas(resizedWidth, resizedHeight);
-        p.background(255);
+        if (!this.saveDialogIsOpen && !this.guideIsOpen) {
+          const resizedSize = document
+            .getElementById("canvas")
+            .getBoundingClientRect();
+          const resizedWidth = Math.floor(resizedSize.width);
+          const resizedHeight = Math.floor(resizedSize.height);
+          p.resizeCanvas(resizedWidth, resizedHeight);
+          p.background(255);
+        }
       };
 
       const resetDrawing = () => {
@@ -302,7 +314,7 @@ export default {
           p.saveCanvas(canvas, this.saveTitle, this.saveType);
           this.saveTitle = "sketch";
           this.saveType = null;
-          this.dialogIsOpen = false;
+          this.saveDialogIsOpen = false;
         }
       };
 
@@ -328,7 +340,7 @@ export default {
       this.guideIsOpen = true;
     },
     openDialog: function () {
-      this.dialogIsOpen = true;
+      this.saveDialogIsOpen = true;
     },
   },
 };
