@@ -1,10 +1,12 @@
 <template>
   <v-main>
-    <v-textfield>This is gallery page</v-textfield>
+    <div>
+      <span>This is gallery page</span>
+    </div>
   </v-main>
 </template>
 <script>
 export default {
-  name: "App"
-}
+  name: "App",
+};
 </script>

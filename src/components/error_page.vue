@@ -1,6 +1,8 @@
 <template>
   <v-main>
-    <v-textfield>This is error page</v-textfield>
+    <div>
+      <span>This is error page</span>
+    </div>
   </v-main>
 </template>
 <script>
